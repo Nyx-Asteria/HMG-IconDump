@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "settings": [
+    {
+      "key": "enable_icon_experiment",
+      "type": "toggle",
+      "title": "Enable experimental launcher icon substitution",
+      "default": false,
+      "apply": "restart"
+    },
+    {
+      "key": "icon_mode",
+      "type": "select",
+      "title": "Launcher icon mode",
+      "default": "stock",
+      "options": [
+        {
+          "value": "stock",
+          "label": "Stock"
+        },
+        {
+          "value": "hyundai",
+          "label": "Hyundai"
+        },
+        {
+          "value": "kia",
+          "label": "Kia"
+        }
+      ],
+      "apply": "restart"
+    }
+  ]
+}
