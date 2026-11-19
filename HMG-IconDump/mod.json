@@ -1,0 +1,31 @@
+{
+  "id": "HMG-IconDump",
+  "name": "HMG-IconDump",
+  "version": "1.0.0-rc1",
+  "hmgapi": ">=1.1.0-rc.3",
+  "authors": [
+    "Nyx-Asteria"
+  ],
+  "license": "MIT",
+  "description": "Read-only launcher icon collector and experimental menu icon selector",
+  "services": [
+    {
+      "name": "launcher-dump",
+      "jar": "launcher-dump.jar",
+      "class": "dev.hmg.icondump.IconDump",
+      "user": "system",
+      "start": "android",
+      "restart": false
+    }
+  ],
+  "usb": [
+    "HMGAPI/IconDump"
+  ],
+  "hooks": {
+    "jar": "hooks.jar",
+    "entry": "dev.hmg.icondump.LauncherIconHook",
+    "points": {
+      "launcher.menu_entry.new": "change"
+    }
+  }
+}
