@@ -11,5 +11,7 @@ javac --release 8 -cp "$ANDROID_JAR:$HMGAPI_SDK/lib/hmgapi-client.jar" -d "$W/cl
 (cd "$W/classes" && jar xf "$HMGAPI_SDK/lib/hmgapi-client.jar")
 "$D8" --release --min-api 19 --lib "$ANDROID_JAR" --output "$W/dex" $(find "$W/classes" -name '*.class')
 (cd "$W/dex" && zip -q -X "$HMGAPI_MOD_BUILD/launcher-dump.jar" classes.dex)
+cp "$HMGAPI_MOD_BUILD/launcher-dump.jar" HMG-IconDump/launcher-dump.jar
+test -s HMG-IconDump/launcher-dump.jar
 test -s "$HMGAPI_MOD_BUILD/hooks.jar"
 test -s "$HMGAPI_MOD_BUILD/launcher-dump.jar"
