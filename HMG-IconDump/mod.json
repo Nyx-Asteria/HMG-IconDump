@@ -1,7 +1,7 @@
 {
   "id": "hmg-icondump",
   "name": "HMG-IconDump",
-  "version": "1.0.0-rc1",
+  "version": "1.0.0-rc.1",
   "hmgapi": ">=1.1.0-rc.3",
   "authors": [
     "Nyx-Asteria"
