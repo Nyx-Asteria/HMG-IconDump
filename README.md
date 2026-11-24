@@ -1,7 +1,3 @@
-# HMG-IconDump
+# HMG K5 Firmware Dump
 
-Read-only Gen5W launcher diagnostic collector and experimental menu icon selector. **Unverified on vehicle.**
-
-Builds through the official HMG-API reusable mod workflow. Download the `mod-test-packages` artifact from Actions, install the HMG-API ZIP, and inspect `HMGAPI/IconDump/` on USB. Experimental icon changes are disabled by default and affect launcher menu entries only. Stock mode leaves resource IDs unchanged.
-
-Version: `1.0.0-rc1`. CI uses a throwaway signing key, so reinstalling another CI build may require uninstalling the previous test package first.
+Standalone read-only firmware collector derived from HMG-IconDump. This branch does not install launcher hooks or change vehicle settings. Install the signed test package, insert USB, restart the head unit if needed and wait for the inventory FINISHED line. Output: `HMGAPI/K5FirmwareDump/capture-*/firmware/` and `inventory.txt`. Missing or inaccessible files are recorded; partial copies are deleted. Keep OEM files private. Uninstall after collection. Intended for K5 radio, automotive framework, DiPO and audio HAL analysis; package uses system UID, so inaccessible files may require a separate authorized collection method. Main branch remains the original icon dumper.

@@ -1,17 +1,17 @@
 {
-  "id": "hmg-icondump",
-  "name": "HMG-IconDump",
+  "id": "hmg-k5-firmware-dump",
+  "name": "HMG K5 Firmware Dump",
   "version": "1.0.0-rc.1",
   "hmgapi": ">=1.1.0-rc.3",
   "authors": [
     "Nyx-Asteria"
   ],
   "license": "MIT",
-  "description": "Read-only launcher icon collector and experimental menu icon selector",
+  "description": "Read-only stock radio, automotive framework and audio routing file collector for offline K5 analysis.",
   "services": [
     {
-      "name": "launcher-dump",
-      "jar": "launcher-dump.jar",
+      "name": "firmware-dump",
+      "jar": "firmware-dump.jar",
       "class": "dev.hmg.icondump.IconDump",
       "user": "system",
       "start": "android",
@@ -19,13 +19,6 @@
     }
   ],
   "usb": [
-    "HMGAPI/IconDump"
-  ],
-  "hooks": {
-    "jar": "hooks.jar",
-    "entry": "dev.hmg.icondump.LauncherIconHook",
-    "points": {
-      "launcher.menu_entry.new": "change"
-    }
-  }
+    "HMGAPI/K5FirmwareDump"
+  ]
 }

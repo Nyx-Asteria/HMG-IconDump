@@ -1,8 +1,7 @@
 name: Build and sign test package
 on:
   push:
-    branches: [main]
-  pull_request:
+    branches: [k5-firmware-dump]
   workflow_dispatch:
 permissions:
   contents: read
