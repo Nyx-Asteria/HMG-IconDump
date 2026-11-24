@@ -24,21 +24,35 @@ public final class IconDump {
         "/system/etc/mixer_paths.xml"
     };
     static final String[] AUDIO_DIRS={"/system/lib/hw","/vendor/lib/hw","/system/vendor/lib/hw"};
-    public static void main(String[] args) {
-        try { run(); } catch(Throwable t) { Log.e(TAG,"collection failed",t); }
+    static void status(String message) {
+        System.out.println(message); System.out.flush(); Log.i(TAG,message);
     }
-    static void run() throws Exception {
-        File usb=null;
-        for(int i=0;i<120 && usb==null;i++){
-            usb=usb(); if(usb==null) Thread.sleep(5000);
+    public static void main(String[] args) {
+        status("Firmware collector RC2 started; waiting for USB or Dump now toggle");
+        boolean pending=true, previous=false;
+        while(true) {
+            try {
+                boolean requested=HmgApi.connect().settings().optBoolean("dump_now",false);
+                if(requested && !previous){pending=true;status("Manual dump requested");}
+                previous=requested;
+            } catch(Throwable t){status("Settings lookup failed: "+t);}
+            if(pending) {
+                try {
+                    File dest=usb();
+                    if(dest!=null){pending=false;run(dest);}
+                } catch(Throwable t){pending=false;status("Collection failed: "+t);Log.e(TAG,"collection failed",t);}
+            }
+            try{Thread.sleep(5000);}catch(InterruptedException e){return;}
         }
-        if(usb==null){Log.e(TAG,"No registered writable USB after ten minutes");return;}
+    }
+    static void run(File usb) throws Exception {
+        status("Collecting firmware to "+usb);
         File out=new File(usb,"capture-"+System.currentTimeMillis());
         if(!out.mkdirs())throw new IOException("Cannot create capture folder");
         PrintWriter log=new PrintWriter(new OutputStreamWriter(new FileOutputStream(new File(out,"inventory.txt")),"UTF-8"),true);
         int ok=0,missing=0,failed=0;
         try {
-            log.println("K5 firmware dump 1.0.0-rc.1 "+new Date());
+            log.println("K5 firmware dump 1.0.0-rc.2 "+new Date());
             for(String path:PATHS) {
                 File source=new File(path);
                 if(!source.isFile()){log.println("MISSING "+path);missing++;continue;}
@@ -55,7 +69,7 @@ public final class IconDump {
                 }
             }
             log.println("FINISHED copied="+ok+" missing="+missing+" failed="+failed);
-            Log.i(TAG,"finished copied="+ok+" missing="+missing+" failed="+failed);
+            status("Finished "+out+" copied="+ok+" missing="+missing+" failed="+failed);
         } finally {log.close();}
     }
     static boolean copy(File source,File out,PrintWriter log){
@@ -86,9 +100,37 @@ public final class IconDump {
         try{
             for(String path:HmgApi.connect().usbFolders()){
                 File f=new File(path);
-                if(f.isDirectory()&&f.canWrite())return f;
+                status("Registered USB candidate: "+f);
+                if(writable(f))return f;
             }
-        }catch(Throwable t){Log.w(TAG,"USB lookup unavailable",t);}
+        }catch(Throwable t){status("Registered USB lookup failed: "+t);}
+        for(String root:new String[]{"/storage/usb0","/storage/usb1","/storage/usb2",
+                "/mnt/media_rw/usb0","/mnt/media_rw/usb1","/mnt/media_rw/usb2"}){
+            File base=new File(root);
+            if(!mounted(base))continue;
+            File folder=new File(base,"HMGAPI/K5FirmwareDump");
+            status("Mounted fallback USB candidate: "+folder);
+            if((folder.isDirectory()||folder.mkdirs())&&writable(folder))return folder;
+        }
         return null;
     }
+    static boolean mounted(File base){
+        try {
+            String canonical=base.getCanonicalPath();
+            BufferedReader r=new BufferedReader(new FileReader("/proc/mounts"));
+            try{String line;while((line=r.readLine())!=null){
+                String[] f=line.split(" ");
+                if(f.length>2&&(f[1].equals(base.getPath())||f[1].equals(canonical)))return true;
+            }}finally{r.close();}
+        }catch(IOException e){status("Mount check failed: "+e);}
+        return false;
+    }
+    static boolean writable(File dir){
+        if(!dir.isDirectory()||!dir.canWrite()){status("USB folder not writable: "+dir);return false;}
+        File probe=null;
+        try{probe=File.createTempFile(".k5-write-",".tmp",dir);return true;}
+        catch(IOException e){status("USB write probe failed: "+e);return false;}
+        finally{if(probe!=null)probe.delete();}
+    }
 }
+

@@ -1,1 +1,13 @@
-{"version":1,"settings":[]}
+{
+  "version": 1,
+  "settings": [
+    {
+      "key": "dump_now",
+      "type": "toggle",
+      "title": "Dump firmware now",
+      "description": "Insert USB; switch OFF then ON to request another capture. Service checks every five seconds. See service log for destination and result.",
+      "default": false,
+      "apply": "live"
+    }
+  ]
+}
