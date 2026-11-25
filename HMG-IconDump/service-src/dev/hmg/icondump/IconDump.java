@@ -20,7 +20,18 @@ public final class IconDump {
         "/system/lib/libleafiaaudio.so","/system/lib/libaudioflinger.so",
         "/system/lib/libaudiopolicy.so","/system/lib/libaudio.so","/system/lib/libmedia.so",
         "/system/etc/audio_policy.conf","/system/etc/audio_effects.conf",
-        "/system/etc/mixer_paths.xml"
+        "/system/etc/mixer_paths.xml",
+        // K5 popup / overlay investigation: names verified in the stock firmware inventory.
+        "/system/priv-app/SystemUI.apk","/system/priv-app/SystemUI.odex",
+        "/system/app/Mobis_SystemPopup.apk","/system/app/Mobis_SystemPopup.odex",
+        "/system/app/HKMC_MediaGate.apk","/system/app/HKMC_MediaGate.odex",
+        "/system/app/HKMC_NaviPopupService.apk","/system/app/HKMC_NaviPopupService.odex",
+        "/system/app/RightScreenHome.apk","/system/app/RightScreenHome.odex",
+        "/system/app/Launcher_WP3.apk","/system/app/Launcher_WP3.odex",
+        "/system/app/BTAudio.apk","/system/app/BTAudio.odex",
+        "/system/framework/framework2.jar","/system/framework/framework2.odex",
+        "/system/framework/media_cmd.jar","/system/framework/media_cmd.odex",
+        "/system/framework/hkmc-res.apk","/system/framework/framework-res.apk"
     };
     static final String[] AUDIO_DIRS={"/system/lib/hw","/vendor/lib/hw","/system/vendor/lib/hw"};
     static void status(String message) {
