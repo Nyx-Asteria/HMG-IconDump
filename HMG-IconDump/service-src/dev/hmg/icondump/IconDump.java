@@ -2,7 +2,6 @@ package dev.hmg.icondump;
 import android.util.Log;
 import hmgapi.client.HmgApi;
 import java.io.*;
-import java.security.MessageDigest;
 import java.util.Date;
 
 /** Read-only, fixed allowlist; no /data, logs, pairing records or credentials. */
@@ -28,7 +27,7 @@ public final class IconDump {
         System.out.println(message); System.out.flush(); Log.i(TAG,message);
     }
     public static void main(String[] args) {
-        status("Firmware collector RC2 started; waiting for USB or Dump now toggle");
+        status("Firmware collector RC3 started; waiting for USB or Dump now toggle");
         boolean pending=true, previous=false;
         while(true) {
             try {
@@ -52,7 +51,7 @@ public final class IconDump {
         PrintWriter log=new PrintWriter(new OutputStreamWriter(new FileOutputStream(new File(out,"inventory.txt")),"UTF-8"),true);
         int ok=0,missing=0,failed=0;
         try {
-            log.println("K5 firmware dump 1.0.0-rc.2 "+new Date());
+            log.println("K5 firmware dump 1.0.0-rc.3 "+new Date());
             for(String path:PATHS) {
                 File source=new File(path);
                 if(!source.isFile()){log.println("MISSING "+path);missing++;continue;}
@@ -82,19 +81,17 @@ public final class IconDump {
             if(!parent.isDirectory()&&!parent.mkdirs())throw new IOException("mkdir");
             if(!source.canRead())throw new IOException("not readable");
             if(parent.getUsableSpace()<source.length()+1048576L)throw new IOException("insufficient USB space");
-            MessageDigest md=MessageDigest.getInstance("SHA-256");
             long size=0;
             try(InputStream in=new FileInputStream(source);FileOutputStream stream=new FileOutputStream(tmp)){
                 byte[] buf=new byte[65536];int n;
-                while((n=in.read(buf))!=-1){stream.write(buf,0,n);md.update(buf,0,n);size+=n;}
+                while((n=in.read(buf))!=-1){stream.write(buf,0,n);size+=n;}
                 stream.getFD().sync();
             }
-            if(size!=source.length()||!tmp.renameTo(target))throw new IOException("incomplete copy");
-            StringBuilder hex=new StringBuilder();
-            for(byte b:md.digest())hex.append(String.format(java.util.Locale.US,"%02x",b&255));
-            log.println("FILE "+source+" size="+size+" sha256="+hex);
+            if(size!=source.length()||tmp.length()!=size||!tmp.renameTo(target)||target.length()!=size)throw new IOException("incomplete copy");
+            log.println("FILE "+source+" size="+size+" (hash deferred to host)");
+            status("Copied "+source+" bytes="+size);
             return true;
-        }catch(Exception e){tmp.delete();log.println("FAILED "+source+" "+e);return false;}
+        }catch(Exception e){tmp.delete();log.println("FAILED "+source+" "+e);status("FAILED "+source+" "+e);return false;}
     }
     static File usb(){
         try{
