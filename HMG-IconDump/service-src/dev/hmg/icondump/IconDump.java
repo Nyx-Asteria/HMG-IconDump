@@ -26,21 +26,62 @@ public final class IconDump {
     }
     public static void main(String[] args) {
         status("Navigation-only firmware collector RC4 started; waiting for USB or Dump now toggle");
-        boolean pending=true, previous=false;
+        boolean pending=true, previous=false, diagnosticPending=false, diagnosticPrevious=false;
         while(true) {
             try {
-                boolean requested=HmgApi.connect().settings().optBoolean("dump_now",false);
+                org.json.JSONObject settings=HmgApi.connect().settings();
+                boolean requested=settings.optBoolean("dump_now",false);
+                boolean diagnostic=settings.optBoolean("export_cpul_logs",false);
+                if(diagnostic && !diagnosticPrevious){diagnosticPending=true;status("CPUL diagnostic export requested");}
+                diagnosticPrevious=diagnostic;
                 if(requested && !previous){pending=true;status("Manual dump requested");}
                 previous=requested;
             } catch(Throwable t){status("Settings lookup failed: "+t);}
-            if(pending) {
+            if(pending || diagnosticPending) {
                 try {
                     File dest=usb();
-                    if(dest!=null){pending=false;run(dest);}
-                } catch(Throwable t){pending=false;status("Collection failed: "+t);Log.e(TAG,"collection failed",t);}
+                    if(dest!=null){
+                        if(diagnosticPending){diagnosticPending=false;exportDiagnostics(dest);}
+                        if(pending){pending=false;run(dest);}
+                    }
+                } catch(Throwable t){pending=false;diagnosticPending=false;status("Collection failed: "+t);Log.e(TAG,"collection failed",t);}
             }
             try{Thread.sleep(5000);}catch(InterruptedException e){return;}
         }
+    }
+    // HMG-API LogKeeper records HMG-API-tagged mod logs here (current and rotated).
+    // Explicit export only; never traverse app data, collect pairing records or dump all logcat.
+    static void exportDiagnostics(File usb) throws IOException {
+        File dir=new File(usb,"cpul-diagnostics-"+System.currentTimeMillis());
+        if(!dir.mkdirs())throw new IOException("Cannot create diagnostic folder");
+        File target=new File(dir,"cpul-runtime.log");
+        int count=0;
+        try(PrintWriter output=new PrintWriter(new OutputStreamWriter(new FileOutputStream(target),"UTF-8"));
+            PrintWriter inventory=new PrintWriter(new OutputStreamWriter(new FileOutputStream(new File(dir,"inventory.txt")),"UTF-8"))){
+            inventory.println("CPUL diagnostic snapshot "+new Date());
+            for(String path:new String[]{"/data/hmgapi/logs/hmgapi/log.log.1","/data/hmgapi/logs/hmgapi/log.log"}){
+                int lines=0;
+                try(BufferedReader reader=new BufferedReader(new InputStreamReader(new FileInputStream(path),"UTF-8"))){
+                    String line;
+                    while((line=reader.readLine())!=null){
+                        if(!isCpulDiagnostic(line))continue;
+                        output.println(line);lines++;
+                    }
+                    count+=lines;
+                    inventory.println("READ "+path+" matching="+lines);
+                }catch(IOException e){inventory.println("UNAVAILABLE "+path+" "+e.getClass().getSimpleName());}
+            }
+            inventory.println("FINISHED matching="+count);
+            if(output.checkError()||inventory.checkError())throw new IOException("USB diagnostic write failed");
+        }
+        status("CPUL diagnostic export finished "+dir+" matching="+count);
+    }
+    static boolean isCpulDiagnostic(String line){
+        int start=line.indexOf("): ");
+        if(start<0||!line.substring(0,start).contains("HMG-API"))return false;
+        // Exact mod prefix; omit unrelated mods and raw system/network logs.
+        String msg=line.substring(start+3);
+        return msg.startsWith("[carplay-ultra-lite-k5] ");
     }
     static void run(File usb) throws Exception {
         status("Collecting firmware to "+usb);

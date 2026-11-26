@@ -8,6 +8,14 @@
       "description": "Insert USB; switch OFF then ON to request another capture. Service checks every five seconds. See service log for destination and result.",
       "default": false,
       "apply": "live"
+    },
+    {
+      "key": "export_cpul_logs",
+      "type": "toggle",
+      "title": "Export CPUL runtime diagnostics",
+      "description": "Insert USB after testing. Toggle OFF then ON to export the current and previous HMG-API logs filtered to CarPlay Ultra-Lite K5. Does not request another firmware dump.",
+      "default": false,
+      "apply": "live"
     }
   ]
 }

@@ -19,3 +19,6 @@ Previous radio, media, DiPO, framework, audio and overlay files are no longer co
 Output is under HMGAPI/K5FirmwareDump/capture-* (or the registered USB folder reported by the service). Include inventory.txt and firmware files. Check for missing/inaccessible paths and failed copies; FINISHED alone does not prove every target was found. System UID/SELinux may prevent engine access. Candidate server filenames are not vehicle-verified. Keep OEM binaries private. Remove the collector after use.
 
 RC4 source is committed but build and vehicle validation remain pending.
+
+## Optional CPUL runtime diagnostics (development)
+Toggle Export CPUL runtime diagnostics OFF then ON after testing, with USB inserted. A separate cpul-diagnostics-* folder contains cpul-runtime.log and inventory.txt. The exporter reads only HMG-API LogKeeper's current and rotated files and filters the exact CPUL mod prefix; it does not change the incremental firmware target list. Capture promptly because the log keeper rotates at 256 KB. Missing/unreadable logs or zero matches are reported in inventory; system-user permissions and exact prefix require vehicle validation. Logs may contain media names, hostnames or other session information; inspect before sharing. No full logcat, private app directory traversal or pairing database export.
