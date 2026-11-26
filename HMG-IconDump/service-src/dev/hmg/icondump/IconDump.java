@@ -4,36 +4,28 @@ import hmgapi.client.HmgApi;
 import java.io.*;
 import java.util.Date;
 
-/** Read-only, fixed allowlist; no /data, logs, pairing records or credentials. */
+/** Read-only exact-file collector; the only /data exception is the stock navigation engine binary. */
 public final class IconDump {
     static final String TAG="HMG-K5FirmwareDump";
+    // Incremental navigation capture: previous audio, DiPO and framework dumps are archived in git.
+    static final String ENGINE="/data/data/com.mnsoft.navi/BIN/libExSLNavi.so";
     static final String[] PATHS={
-        "/system/app/HKMC_RadioNA.apk","/system/app/HKMC_RadioNA.odex",
-        "/system/app/HKMC_Media.apk","/system/app/HKMC_Media.odex",
-        "/system/app/HKMC_DiPO.apk","/system/app/HKMC_DiPO.odex",
-        "/system/framework/automotive.jar","/system/framework/automotive.odex",
-        "/system/framework/automotive-service.jar","/system/framework/automotive-service.odex",
-        "/system/framework/framework.jar","/system/framework/framework.odex",
-        "/system/framework/services.jar","/system/framework/services.odex",
-        "/system/framework/com.hkmc.ext.hcan.jar","/system/framework/com.hkmc.ext.hcan.odex",
-        "/system/lib/libCarPlayCore.so","/system/lib/libiap2session.so",
-        "/system/lib/libleafiaaudio.so","/system/lib/libaudioflinger.so",
-        "/system/lib/libaudiopolicy.so","/system/lib/libaudio.so","/system/lib/libmedia.so",
-        "/system/etc/audio_policy.conf","/system/etc/audio_effects.conf",
-        "/system/etc/mixer_paths.xml",
-        // K5 popup / overlay investigation: names verified in the stock firmware inventory.
-        "/system/priv-app/SystemUI.apk","/system/priv-app/SystemUI.odex",
-        "/system/app/Mobis_SystemPopup.apk","/system/app/Mobis_SystemPopup.odex",
-        "/system/app/HKMC_MediaGate.apk","/system/app/HKMC_MediaGate.odex",
-        "/system/framework/framework2.jar","/system/framework/framework2.odex",
-        "/system/framework/media_cmd.jar","/system/framework/media_cmd.odex"
+        ENGINE,
+        "/system/lib/libExSLNavi.so",
+        "/system/app/HKMC_iAP2Server.apk","/system/app/HKMC_iAP2Server.odex",
+        "/system/app/Iap2Server.apk","/system/app/Iap2Server.odex",
+        "/system/app/iap2server.apk","/system/app/iap2server.odex",
+        "/system/app/IAP2Server.apk","/system/app/IAP2Server.odex",
+        "/system/priv-app/Iap2Server.apk","/system/priv-app/Iap2Server.odex",
+        "/system/priv-app/iap2server.apk","/system/priv-app/iap2server.odex",
+        "/system/priv-app/IAP2Server.apk","/system/priv-app/IAP2Server.odex"
     };
-    static final String[] AUDIO_DIRS={"/system/lib/hw","/vendor/lib/hw","/system/vendor/lib/hw"};
+    static final String[] APP_DIRS={"/system/app","/system/priv-app","/vendor/app"};
     static void status(String message) {
         System.out.println(message); System.out.flush(); Log.i(TAG,message);
     }
     public static void main(String[] args) {
-        status("Firmware collector RC3 started; waiting for USB or Dump now toggle");
+        status("Navigation-only firmware collector RC4 started; waiting for USB or Dump now toggle");
         boolean pending=true, previous=false;
         while(true) {
             try {
@@ -57,21 +49,30 @@ public final class IconDump {
         PrintWriter log=new PrintWriter(new OutputStreamWriter(new FileOutputStream(new File(out,"inventory.txt")),"UTF-8"),true);
         int ok=0,missing=0,failed=0;
         try {
-            log.println("K5 firmware dump 1.0.0-rc.3 "+new Date());
-            for(String path:PATHS) {
-                File source=new File(path);
-                if(!source.isFile()){log.println("MISSING "+path);missing++;continue;}
-                if(copy(source,out,log))ok++;else failed++;
-            }
-            for(String path:AUDIO_DIRS){
+            log.println("K5 incremental navigation firmware dump 1.0.0-rc.4 "+new Date());
+            java.util.Set<String> candidates=new java.util.LinkedHashSet<String>();
+            java.util.Collections.addAll(candidates,PATHS);
+            // Discover case/vendor variations of the server package, not unrelated APKs.
+            for(String path:APP_DIRS){
                 File[] files=new File(path).listFiles();
                 if(files==null){log.println("UNAVAILABLE DIRECTORY "+path);continue;}
                 for(File f:files){
-                    String n=f.getName();
-                    if(f.isFile() && n.endsWith(".so") && (n.startsWith("audio.primary.") || n.startsWith("audio_policy.") || n.startsWith("audio.a2dp.") || n.startsWith("audio.usb."))){
-                        if(copy(f,out,log))ok++;else failed++;
+                    String n=f.getName().toLowerCase(java.util.Locale.ROOT);
+                    if(f.isFile() && n.contains("iap2") && n.contains("server")
+                            && (n.endsWith(".apk") || n.endsWith(".odex"))) candidates.add(f.getAbsolutePath());
+                    if(f.isDirectory() && n.contains("iap2") && n.contains("server")){
+                        File[] children=f.listFiles();
+                        if(children!=null)for(File child:children){
+                            String cn=child.getName().toLowerCase(java.util.Locale.ROOT);
+                            if(child.isFile() && (cn.endsWith(".apk") || cn.endsWith(".odex"))) candidates.add(child.getAbsolutePath());
+                        }
                     }
                 }
+            }
+            for(String path:candidates) {
+                File source=new File(path);
+                if(!source.isFile()){log.println("MISSING OR INACCESSIBLE "+path);missing++;continue;}
+                if(copy(source,out,log))ok++;else failed++;
             }
             log.println("FINISHED copied="+ok+" missing="+missing+" failed="+failed);
             status("Finished "+out+" copied="+ok+" missing="+missing+" failed="+failed);
@@ -82,7 +83,8 @@ public final class IconDump {
         File tmp=new File(target.getPath()+".partial");
         try {
             String canonical=source.getCanonicalPath();
-            if(!canonical.startsWith("/system/")&&!canonical.startsWith("/vendor/"))throw new IOException("outside firmware roots");
+            if(!canonical.startsWith("/system/")&&!canonical.startsWith("/vendor/")
+                    && !(ENGINE.equals(source.getAbsolutePath()) && ENGINE.equals(canonical)))throw new IOException("outside approved firmware paths");
             File parent=target.getParentFile();
             if(!parent.isDirectory()&&!parent.mkdirs())throw new IOException("mkdir");
             if(!source.canRead())throw new IOException("not readable");
