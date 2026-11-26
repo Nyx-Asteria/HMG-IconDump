@@ -1,13 +1,13 @@
 {
   "id": "hmg-k5-firmware-dump",
   "name": "HMG K5 Firmware Dump",
-  "version": "1.0.0-rc.3",
+  "version": "1.0.0-rc.4",
   "hmgapi": ">=1.1.0-rc.3",
   "authors": [
     "Nyx-Asteria"
   ],
   "license": "MIT",
-  "description": "Read-only stock radio, automotive framework and audio routing file collector for offline K5 analysis.",
+  "description": "Incremental read-only K5 navigation engine and iAP2 server collector.",
   "services": [
     {
       "name": "firmware-dump",
