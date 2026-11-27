@@ -7,3 +7,7 @@ Standalone read-only firmware collector derived from HMG-IconDump. This branch d
 Collects only the stock `libExSLNavi.so` engine and candidate iAP2 server APK/ODEX files. Previous audio, radio, DiPO, framework and overlay collection is disabled; retain earlier archives. The exact `/data/data/com.mnsoft.navi/BIN/libExSLNavi.so` path is the only private-data exception; no directory traversal under `/data` is performed. System UID may be denied by filesystem permissions or SELinux; inventory records missing/inaccessible files. Candidate server package names are not yet vehicle-verified. Keep OEM binaries private.
 
 See [RC4 update and collection instructions](UPDATE.md) before installing. The RC4 build and vehicle collection have not yet been verified.
+
+## RC10 incremental collection preparation
+
+The archived Iap2ServerApp APK/ODEX pair is excluded from future discovery copies. The inventory records skipped archived candidates separately. Missing navigation engine and other exact candidate paths remain eligible. Earlier radio, audio and framework targets remain disabled. No release version change until the bundle is prepared.

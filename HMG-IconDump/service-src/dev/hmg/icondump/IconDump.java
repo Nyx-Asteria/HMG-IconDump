@@ -25,7 +25,7 @@ public final class IconDump {
         System.out.println(message); System.out.flush(); Log.i(TAG,message);
     }
     public static void main(String[] args) {
-        status("Navigation-only firmware collector RC4 started; waiting for USB or Dump now toggle");
+        status("Incremental navigation firmware collector started; waiting for USB or Dump now toggle");
         boolean pending=true, previous=false, diagnosticPending=false, diagnosticPrevious=false;
         while(true) {
             try {
@@ -88,7 +88,7 @@ public final class IconDump {
         File out=new File(usb,"capture-"+System.currentTimeMillis());
         if(!out.mkdirs())throw new IOException("Cannot create capture folder");
         PrintWriter log=new PrintWriter(new OutputStreamWriter(new FileOutputStream(new File(out,"inventory.txt")),"UTF-8"),true);
-        int ok=0,missing=0,failed=0;
+        int ok=0,missing=0,failed=0,skipped=0;
         try {
             log.println("K5 incremental navigation firmware dump 1.0.0-rc.4 "+new Date());
             java.util.Set<String> candidates=new java.util.LinkedHashSet<String>();
@@ -112,12 +112,17 @@ public final class IconDump {
             }
             for(String path:candidates) {
                 File source=new File(path);
+                if(previouslyCollectedServer(source.getName())){log.println("SKIPPED ARCHIVED "+path);skipped++;continue;}
                 if(!source.isFile()){log.println("MISSING OR INACCESSIBLE "+path);missing++;continue;}
                 if(copy(source,out,log))ok++;else failed++;
             }
-            log.println("FINISHED copied="+ok+" missing="+missing+" failed="+failed);
-            status("Finished "+out+" copied="+ok+" missing="+missing+" failed="+failed);
+            log.println("FINISHED copied="+ok+" missing="+missing+" failed="+failed+" skipped="+skipped);
+            status("Finished "+out+" copied="+ok+" missing="+missing+" failed="+failed+" skipped="+skipped);
         } finally {log.close();}
+    }
+    // RC4 collection already supplied these two binaries; never repeat their capture.
+    static boolean previouslyCollectedServer(String name){
+        return "Iap2ServerApp.apk".equals(name)||"Iap2ServerApp.odex".equals(name);
     }
     static boolean copy(File source,File out,PrintWriter log){
         File target=new File(out,"firmware"+source.getAbsolutePath());
